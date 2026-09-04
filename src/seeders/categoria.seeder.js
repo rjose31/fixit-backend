@@ -10,6 +10,9 @@ const Categoria = require('../models/categoria.model');
 // registros ni pisar los que ya fueron editados desde el panel admin.
 //
 // Uso: node src/seeders/categoria.seeder.js
+//
+// Este archivo también exporta `seedCategorias()` para que el seeder
+// maestro (src/seeders/index.js) lo reutilice sin duplicar la lista.
 // -----------------------------------------------------------------------
 const CATEGORIAS = [
   { nombre: 'Plomería', descripcion: 'Instalación y reparación de tuberías, grifería y sanitarios', icono: 'plumbing' },
@@ -26,18 +29,24 @@ const CATEGORIAS = [
   { nombre: 'Instalación de electrodomésticos', descripcion: 'Instalación y conexión de electrodomésticos del hogar', icono: 'home_repair_service' },
 ];
 
+// Lógica de siembra reutilizable (sin `process.exit`, para que el
+// seeder maestro pueda invocarla como un paso más de su orquestación).
+async function seedCategorias() {
+  for (const categoria of CATEGORIAS) {
+    const [registro, creado] = await Categoria.findOrCreate({
+      where: { nombre: categoria.nombre },
+      defaults: categoria,
+    });
+    console.log(creado ? `✅ Creada: ${registro.nombre}` : `↪️  Ya existía: ${registro.nombre}`);
+  }
+}
+
+// Wrapper con manejo de proceso (authenticate + exit), solo para cuando
+// este archivo se corre standalone (node src/seeders/categoria.seeder.js).
 async function seed() {
   try {
     await sequelize.authenticate();
-
-    for (const categoria of CATEGORIAS) {
-      const [registro, creado] = await Categoria.findOrCreate({
-        where: { nombre: categoria.nombre },
-        defaults: categoria,
-      });
-      console.log(creado ? `✅ Creada: ${registro.nombre}` : `↪️  Ya existía: ${registro.nombre}`);
-    }
-
+    await seedCategorias();
     console.log('🌱 Seed de categorías completado.');
     process.exit(0);
   } catch (error) {
@@ -46,4 +55,10 @@ async function seed() {
   }
 }
 
-seed();
+// Solo se auto-ejecuta si se invoca directamente, no cuando otro
+// seeder hace `require('./categoria.seeder')`.
+if (require.main === module) {
+  seed();
+}
+
+module.exports = { CATEGORIAS, seedCategorias };

@@ -14,8 +14,8 @@ const router = Router();
 // catálogo que ven TODOS los usuarios (clientes y proveedores).
 // -----------------------------------------------------------------------
 //Este es un cambio cualquier solo para disparar el flujo de trabajo de GitHub Actions. No tiene relevancia para el proyecto.
-router.get('/', categoriaController.listarCategorias);
-router.get('/:id', categoriaController.obtenerCategoria);
+router.get('/', authenticate,categoriaController.listarCategorias);
+router.get('/:id', authenticate, categoriaController.obtenerCategoria);
 
 router.post(
   '/',
